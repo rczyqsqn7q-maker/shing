@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>LIFE ONLINE</title>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        :root {
+            --pink: #FFB6C1;
+            --pink-dark: #FF69B4;
+            --white: #FFFFFF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            /* 调整背景：放大一点点以留出移动空间 */
+            background: url("IMG_5971.GIF") no-repeat center center;
+            background-size:cover; 
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            /* 新增：无限平滑移动动画（30秒一个来回，ease-in-out 让边缘过渡自然） */
+            animation: bgPan 30s ease-in-out infinite alternate;
+        }
+
+        /* 定义背景平移动画 */
+        @keyframes bgPan {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+
+        #start-screen {
+            width: 100%;
+            height:100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+        }
+
+       #main-title-img {
+         width: 85%; /* 從 60% 調大到 85% */
+         max-width: 1000px; /* 增加最大寬度限制，確保在大螢幕上也很顯眼 */
+         height: auto;
+         margin-bottom: 40px; /* 稍微增加與按鈕之間的間距，視覺更平衡 */
+         mix-blend-mode: screen; 
+         filter: drop-shadow(0 0 10px rgba(255, 182, 193, 0.5)); /* 選配：增加一點發光感 */
+       } 
+
+        .choice-btn {
+            padding: 18px 40px;
+            border: 2px solid var(--pink);
+            background: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .choice-btn:hover {
+            background: var(--pink);
+            color: #fff;
+        }
+
+        #dialogue {
+            position: fixed;
+            bottom: 40px;
+            left: 5%;
+            width: 90%;
+            padding: 20px 35px;
+            border: 3px solid var(--pink);
+            background: white;
+            z-index: 998;
+            display: none;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .dialogue-header {
+            display: flex;
+            align-items: baseline; 
+            gap: 15px; 
+            margin-bottom: 10px;
+        }
+
+        .name {
+            font-weight: bold;
+            color: var(--pink-dark);
+            font-size: 22px;
+            white-space: nowrap; 
+        }
+
+        .talk-content {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            min-height: 20px;
+            flex: 1; 
+        }
+
+        .hint-continue {
+            text-align: right;
+            font-size: 14px;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        #player-3d {
+            width: 120px;
+            height: 100px; 
+            margin: 5px 0;
+        }
+
+        #centerPopup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: transparent;
+            z-index: 999;
+            display: none;
+            /* 修改这里：将助手立绘的整体容器高度调小 (原本为 100vh，现在为 60vh) */
+            height: 80vh; 
+            width: auto;
+        }
+        
+        #sprite {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+            transform: rotate(90deg); 
+        }
+
+        #assistantText {
+            position: fixed;
+            left: 50%;
+            top: 82%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 3px solid var(--pink);
+            padding: 24px 40px;
+            font-weight: bold;
+            font-size: 24px;
+            z-index: 99999;
+            border-radius: 10px;
+            box-shadow: 4px 4px 0 var(--pink);
+            display: none;
+            max-width: 85%;
+            text-align: center;
+        }
+
+        .close-assistant {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="start-screen">
+    <img id="main-title-img" src="tii.png" alt="LIFE ONLINE TITLE">
+    
+    <button class="choice-btn" onclick="clickStart()">START</button>
+    <button class="choice-btn">SETTING</button>
+    <button class="choice-btn">ABOUT</button>
+    <button class="choice-btn" onclick="clickLogout()">LOG OUT</button>
+    <!-- 新增 NOTES 按钮，默认隐藏，仅在拔完钉子弹回时显示 -->
+    <button class="choice-btn" id="notes-btn" style="display:none;" onclick="window.location.href='notes.html'">NOTES</button>
+</div>
+
+<div id="dialogue" onclick="nextTalk()">
+    <div class="dialogue-header">
+        <div class="name">玩家 :</div>
+        <div class="talk-content" id="talkText"></div>
+    </div>
+    <div id="player-3d"></div>
+    <div class="hint-continue">點擊這裡繼續</div>
+</div>
+
+<div id="centerPopup">
+    <img id="sprite" src="aaaa.GIF" alt="助手">
+</div>
+
+<div id="assistantText">
+    <button class="close-assistant"></button>
+</div>
+
+<script>
+const GO_TO_URL = "work.html";
+
+const popupLines = [
+    "Hi",
+    "I am your assistant.",
+    "My name is *&%ogx#^",
+    "Let me introduce this game"
+];
+const playerLines = [
+    "AH！",
+    "Who are you?"
+];
+
+let step = 0;
+let popIndex = 0;
+let playIndex = 0;
+
+function clickStart() {
+    if(step !== 0) return;
+    showDialogue("Is this game bugged?");
+    step = 1;
+}
+
+function clickLogout() {
+    if(step !== 2) return;
+    showDialogue("Why is it not working?");
+    step = 3;
+}
+
+function showDialogue(txt) {
+    let d = document.getElementById("dialogue");
+    let t = document.getElementById("talkText");
+    t.innerText = txt; 
+    d.style.display = "block";
+}
+
+function nextTalk() {
+    document.getElementById("dialogue").style.display = "none";
+
+    if(step === 1){
+        step = 2;
+    }
+    else if(step === 3){
+        openPopupStory();
+    }
+    else if(step === 4){
+        popIndex++;
+        playIndex++;
+        if(popIndex < popupLines.length){
+            loadPopupLine();
+        }else{
+            document.getElementById("centerPopup").style.display = "none";
+            document.getElementById("assistantText").style.display = "none";
+            window.location.href = GO_TO_URL;
+        }
+    }
+}
+
+function openPopupStory() {
+    document.getElementById("centerPopup").style.display = "block";
+    document.getElementById("assistantText").style.display = "block";
+    popIndex = 0;
+    playIndex = 0;
+    step = 4;
+    loadPopupLine();
+}
+
+function loadPopupLine() {
+    const text = popupLines[popIndex];
+    document.getElementById("assistantText").innerHTML = `<button class="close-assistant" onclick="closeAssistant()">×</button>${text}`;
+    
+    if(playIndex < playerLines.length){
+        showDialogue(playerLines[playIndex]);
+    }else{
+        showDialogue("...");
+    }
+}
+
+function closeAssistant() {
+    document.getElementById("centerPopup").style.display = "none";
+    document.getElementById("assistantText").style.display = "none";
+}
+
+// 页面加载时检查 URL 参数，如果包含 showNotes=true，则显示 NOTES 按钮
+window.addEventListener('load', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('showNotes') === 'true') {
+        const notesBtn = document.getElementById('notes-btn');
+        if (notesBtn) notesBtn.style.display = 'block';
+    }
+});
+</script>
+</body>
+</html>

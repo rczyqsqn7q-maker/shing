@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dreamcore Interactive</title>
+    <style>
+        :root {
+            --pink: #FFB6C1;
+            --pink-dark: #FF69B4;
+            --white: #FFFFFF;
+            --bg-blur: rgba(255, 255, 255, 0.35);
+        }
+        .dialogue-box {
+            position: absolute;
+            bottom: 50px;
+            width: 80%;
+            min-height: 120px;
+            border: 3px solid var(--pink);
+            background: white;
+            padding: 20px;
+            box-shadow: 5px 5px 0px var(--pink);
+            z-index: 100;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            width: 100%; height: 100%;
+            background: url("IMG_5971.GIF") no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* 结局背景视频（默认隐藏，触发后在主页面显示） */
+        #ending-bg-video {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: 0;
+            display: none;
+            pointer-events: none;
+        }
+
+        /* Awake / Sleep 结局图标按钮样式 */
+        .icon-btn {
+            padding: 0;
+            width: 90px;
+            height: 55px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .icon-btn img {
+            height: 40px;
+            width: auto;
+            display: block;
+        }
+
+        /* 结局用：只有图标，不要外框/白底 */
+        .icon-only-btn {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            width: auto;
+            height: auto;
+            cursor: pointer;
+        }
+        .icon-only-btn img {
+            /* 调大一点 */
+            height: 120px;
+            width: auto;
+            display: block;
+        }
+        /* 两个图标的摆放位置 */
+        #ending-actions {
+            margin-top: 24px !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 28px;
+        }
+        /* AWAKE 往上微调一点点 */
+        #awake-btn.icon-only-btn {
+            transform: translateY(-50px);
+        }
+ /* 对话框整体容器 */
+.img-dialog-wrap {
+    position: absolute;
+    width: 400px;
+    z-index: 2005;
+    display: none;
+    pointer-events: none;
+}
+
+/* 背景图片 */
+.img-dialog-bg {
+    width: 100%;
+    display: block;
+    filter: drop-shadow(3px 3px 0px var(--pink));
+}
+
+/* 文字容器 */
+.img-dialog-text-container {
+    position: absolute;
+    top: 10%;
+    left: 45%;
+    width: 52%;
+    height: 65%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* 文字样式 */
+.img-dialog-text {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    line-height: 1.2;
+    padding: 5px;
+}
+
+/* 主页面对话框位置 */
+#main-plot-dialog {
+    top: 80px;
+    left: 30px;
+}
+
+/* About You 页面对话框 */
+#about-page-dialog {
+    position: fixed;
+    bottom: 15px;
+    left: 45%;
+    transform: translateX(-70%);
+    width: 400px;
+    display: none;
+    z-index: 2005;
+}
+/* Feeling 对话框 */
+#feeling-plot-dialog {
+    top: 75px; 
+    left: 38%;
+    display: none;
+}
+/* Today's Message 主页面指引 */
+#message-plot-dialog {
+    top: 75px; 
+    left: 70%;
+    display: none;
+}
+
+/* Message 页面内指引 */
+#message-page-dialog {
+    position: absolute;
+    bottom: 20px;
+    left: 60%;
+    width: 600px;
+    display: none;
+    z-index: 2005;
+}
+
+/* HEART 指引对话框 */
+#heart-plot-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 400px;
+    z-index: 2005;
+    display: none;
+    pointer-events: none;
+}
+
+/* HEART 页面提示 */
+#heart-page-rotten-text {
+    position: fixed;
+    width: 500px;
+    left: 0;
+    top: 0;
+    transform: none;
+    display: none;
+    z-index: 2005;
+    pointer-events: none;
+}
+
+/* Current situation 对话框【最终左移位置】 */
+#situation-plot-dialog {
+    position: absolute;
+    bottom: 120px;
+    left: 42%; /* 再次左移，完美适配按钮 */
+    width: 400px;
+    z-index: 2005;
+    display: none;
+    /* 需要能被点击关闭，所以允许接收点击事件 */
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+/* 第二行文案样式 */
+.sub-text {
+    font-size: 11px;
+    display: block;
+    margin-top: 4px;
+    color: var(--pink-dark);
+}
+        .screen {
+            display: none;
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            padding: 40px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #FFFFFF;
+            z-index: 1000;
+        }
+        .screen.active { display: flex; }
+
+        #welcome-screen {
+            background: rgba(255,255,255,0.25); 
+            z-index: 1;
+        }
+          .small-close-btn {
+            padding: 4px 10px;
+            font-size: 12px;
+            border: 1px solid var(--pink);
+            background: #fff;
+            color: var(--pink-dark);
+            cursor: pointer;
+            margin-top: 15px;
+            border-radius: 2px;
+        }
+        .pink-btn {
+            background: rgba(255, 255, 255, 0.85);
+            border: 2px solid var(--pink);
+            color: var(--pink-dark);
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .pink-btn:active { background: var(--pink); color: white; }
+        .pink-btn.locked { opacity: 0.5; cursor: not-allowed; }
+
+        .close-btn {
+            position: absolute;
+            top: 20px; right: 20px;
+            width: 40px; height: 40px;
+            border: 2px solid var(--pink);
+            color: var(--pink-dark);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 99999999 !important;
+            position: fixed !important;
+            background: #ffffff !important;
+        }
+        .nav-grid {
+            position: absolute; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        .nav-row {
+            position: absolute; width: 100%;
+            display: flex; justify-content: space-around;
+            padding: 20px; pointer-events: auto;
+        }
+        .nav-top { top: 0; }
+        .nav-bottom { bottom: 0; }
+
+        .center-hero { position: relative; text-align: center; }
+    .brain-bg {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px; height: 300px;
+            background: url('https://cdn-icons-png.flaticon.com/512/2041/2041071.png') no-repeat center;
+            background-size: contain;
+            filter: blur(15px) opacity(0.4);
+            z-index: -1;
+        }
+        /* 结局背景模式：移除主页面背后的光圈/装饰 */
+        body.ending-mode .brain-bg,
+        body.ending-mode .sparkle {
+            display: none !important;
+        }
+
+        /* 水平撕裂（glitch tear）效果：用于主页面/助手出现前短暂吓一下 */
+        #app.tear-active {
+            filter: url(#tear-filter);
+            animation: tear-jitter 0.12s steps(2, end) infinite;
+            will-change: filter, transform;
+        }
+        @keyframes tear-jitter {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            50% { transform: translateX(2px); }
+            75% { transform: translateX(-2px); }
+            100% { transform: translateX(0); }
+        }
+        .welcome-title { font-size: 80px; margin: 0; color: #333; position: relative; }
+        
+        .sparkle {
+            position: absolute;
+            width: 20px; height: 20px;
+            background: var(--pink);
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .popup-overlay {
+            display: none; position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            align-items: center; justify-content: center;
+        }
+        .popup-content {
+            background: white; border: 2px solid var(--pink);
+            padding: 40px; text-align: center; position: relative;
+        }
+        .blur-text { 
+            filter: blur(1.5px); /* 降低初始模糊度 */
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            color: var(--pink-dark); /* 统一粉红色 */
+            font-size: 38px; /* 字体放大 */
+        }
+
+        /* Sleep 页面覆盖效果 */
+        .sleep-overlay-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 42px; /* 字体放大 */
+            font-weight: bold;
+            color: var(--pink-dark); /* 统一粉红色 */
+            pointer-events: none;
+            z-index: 2001;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            width: 100%;
+        }
+        .sleep-under-text {
+            opacity: 0.3;
+        }
+
+        /* Awake 页面拖拽拼词 */
+        .error-letter {
+            position: absolute;
+            font-size: 48px;
+            font-weight: bold;
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+            color: #333;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .fragment {
+            position: absolute;
+            font-size: 24px;
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+            color: var(--pink-dark); /* 统一粉红色 */
+            opacity: 0.9;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        #popup-text {
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 2px;
+            color: var(--pink-dark); /* 统一粉红色 */
+        }
+        .long-press-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: var(--pink-dark);
+            font-weight: bold;
+            display: none;
+            animation: blink 1s infinite;
+        }
+        .progress-bar-container {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: #eee;
+            display: none;
+        }
+        #long-press-progress {
+            width: 0%;
+            height: 100%;
+            background: var(--pink-dark);
+            transition: width 0.1s linear;
+        }
+        .help-target {
+            position: absolute;
+            width: 60px;
+            height: 80px;
+            border: 2px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: #eee;
+        }
+
+        .input-line { border: none; border-bottom: 2px solid var(--pink); outline: none; width: 200px; font-family: inherit; background: transparent; }
+        .emotion-bubble {
+            display: inline-block; padding: 8px 15px;
+            background: var(--pink); border-radius: 20px;
+            color: white; cursor: move; margin: 10px;
+            touch-action: none; font-weight: bold;
+        }
+
+        #message-area { width: 100%; height: 100%; position: relative; }
+        .msg-bubble {
+            position: absolute; padding: 15px; background: rgba(255,255,255,0.9);
+            border: 1px solid var(--pink); border-radius: 15px;
+            cursor: move; touch-action: none; user-select: none;
+            transition: transform 0.2s;
+        }
+        #trash-bin {
+            position: absolute; bottom: 30px; left: 50%;
+            transform: translateX(-50%); cursor: pointer;
+            width: 140px; height: 140px; /* 垃圾桶显著放大 */
+        }
+        #trash-bin img {
+            width: 100%; height: 100%; object-fit: contain;
+        }
+        .sucking { animation: suckIn 0.5s forwards; }
+        @keyframes suckIn {
+            to { transform: scale(0) rotate(360deg); opacity: 0; }
+        }
+
+        #heart-container { position: relative; text-align: center; background: rgba(255,255,255,0.6); padding: 20px; border-radius: 10px;}
+        #heart-img {
+            width: 450px;
+            animation: beat 1s infinite ease-in-out;
+            transition: filter 0.5s;
+        }
+        @keyframes beat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        #scratch-wrapper { position: relative; width: 600px; height: 300px; background: rgba(255,255,255,0.85); border-radius: 10px;}
+        .scratch-reveal-text {
+            position: absolute; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; z-index: 1;
+        }
+
+        #reminder-area { position: relative; }
+        .sticky-note {
+            position: absolute; width: 150px; height: 150px;
+            padding: 15px; box-shadow: 3px 3px 10px rgba(0,0,0,0.1);
+            cursor: move; touch-action: none;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; font-size: 14px; transition: transform 0.2s;
+            background: rgba(255,255,255,0.9);
+        }
+
+        .pin {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translate(-50%, -50%); 
+            width: 48px;
+            height: auto;
+            z-index: 10;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.2s ease;
+        }
+        
+        .pin:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        .note-fall {
+            animation: noteDissolve 0.5s forwards;
+            pointer-events: none;
+        }
+
+        @keyframes noteDissolve {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(150px) rotate(20deg); opacity: 0; }
+        }
+
+        .zoomed { transform: scale(1.8) !important; z-index: 5000 !important; }
+
+        @keyframes screen-flash {
+            0%, 100% { background: #000; opacity: 1; }
+            50% { background: #fff; opacity: 0.8; }
+        }
+        .screen-flash {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 9999999;
+            display: none;
+            animation: screen-flash 0.15s ease;
+        }
+
+        #dialogue, #ending-player-dialogue {
+            position: fixed;
+            bottom: 30px;
+            left: 10%;
+            width: 80%;
+            padding: 15px 25px;
+            border: 3px solid var(--pink);
+            background: white;
+            z-index: 999997;
+            display: none;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .name {
+            font-weight: bold;
+            color: var(--pink-dark);
+            margin-bottom: 8px;
+            font-size: 17px;
+        }
+        .talk-content {
+            font-size: 15px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 12px;
+            min-height: 20px;
+        }
+        .hint-continue {
+            text-align: right;
+            font-size: 12px;
+            color: #999;
+        }
+
+        #customDialog {
+            position: fixed;
+            bottom: 30px;
+            left: 10%;
+            width: 80%;
+            padding: 15px 25px;
+            border: 3px solid var(--pink);
+            background: white;
+            z-index: 999999;
+            display: none;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        #centerPopup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: transparent;
+            border: none;
+            padding: 0;
+            z-index: 999998;
+            text-align: center;
+            display: none;
+            height: 80vh;
+            width: auto;
+        }
+        #sprite {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+            transform: rotate(90deg); 
+        }
+
+        #assistantText {
+            position: fixed;
+            left: 50%;
+            top: 92%;
+            transform: translateX(-50%);
+            background: white;
+            border: 3px solid var(--pink);
+            padding: 18px 30px;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 999999;
+            border-radius: 10px;
+            box-shadow: 4px 4px 0 var(--pink);
+            display: none;
+            max-width: 75%;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .full-gif {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            object-fit: cover;
+            z-index: 99999999;
+            display: none;
+        }
+        /* kk.PNG 往下微调，但仍保持全屏 cover */
+        #gif1 {
+            object-position: center 60%;
+        }
+        /* lo.gif：全屏铺满，取消旋转 */
+        #gif2 {
+            width: 100vw;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            transform: none;
+            object-fit: cover;
+        }
+        /* 参考视频截取的“吓一下”段落（眼睛/黑屏），全屏覆盖 */
+        #scare-video.full-gif {
+            background: #000;
+        }
+        /* Welcome 页参考视频的 glitch 片段，全屏覆盖 */
+        #welcome-glitch-video.full-gif {
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+<!-- 结局背景视频（在 Survival reminders 最后一张便签拔完钉子后启用） -->
+<video id="ending-bg-video" muted autoplay loop playsinline>
+    <source src="d:\lokk\wee\9.mp4" type="video/mp4">
+</video>
+<!-- 主页面对话框 -->
+<div id="main-plot-dialog" class="img-dialog-wrap">
+    <img src="d:\lokk\wee\對話框.png" class="img-dialog-bg">
+    <div class="img-dialog-text-container">
+        <div class="img-dialog-text">First, you have to check your profit.</div>
+    </div>
+</div>
+
+<!-- About You 页面对话框 -->
+<div id="about-page-dialog" class="img-dialog-wrap">
+    <img src="d:\lokk\wee\對話框.png" class="img-dialog-bg">
+    <div class="img-dialog-text-container">
+        <div class="img-dialog-text">You can type things here and feel you with emotion</div>
+    </div>
+</div>
+<!-- Feeling 指引对话框 -->
+<div id="feeling-plot-dialog" class="img-dialog-wrap">
+    <img src="d:\lokk\wee\對話框.png" class="img-dialog-bg">
+    <div class="img-dialog-text-container">
+        <div class="img-dialog-text">Then, you have to check your feelings.</div>
+    </div>
+</div>
+<!-- 主页面 Message 指引 -->
+<div id="message-plot-dialog" class="img-dialog-wrap">
+    <img src="d:\lokk\wee\對話框.png" class="img-dialog-bg">
+    <div class="img-dialog-text-container">
+        <div class="img-dialog-text">Let’s see if there’s any message.</div>
+    </div>
+</div>
+
+<!-- Message 页面内指引 -->
+<div id="message-page-dialog" class="img-dialog-wrap">
+    <img src="d:\lokk\wee\對話框.png" class="img-dialog-bg">
+    <div class="img-dialog-text-container">
+        <div class="img-dialog-text">
+            seems like your heart is a bit rotten.
+            <span class="sub-text">Pull the bubbles that you don’t like!</span>
+        </div>
+    </div>
+</div>
+
+<!-- HEART 按钮指引对话框 -->
+<div id="heart-plot-dialog" class="img-dialog-wrap">
+    <img src="d:\lokk\wee\對話框.png" class="img-dialog-bg">
+    <div class="img-dialog-text-container">
+        <div class="img-dialog-text">Then, you have to check your heart.</div>
+    </div>
+</div>
+
+<!-- HEART 页面提示 -->
+<div id="heart-page-rotten-text" class="img-dialog-wrap">
+    <img src="d:\lokk\wee\對話框.png" class="img-dialog-bg">
+    <div class="img-dialog-text-container">
+        <div class="img-dialog-text">
+            seems like your heart is a bit rotten.<br>
+            remember to keep it red
+        </div>
+    </div>
+</div>
+
+<!-- Current situation 按钮指引 -->
+<div id="situation-plot-dialog" class="img-dialog-wrap" onclick="hideSituationHint()">
+    <img src="d:\lokk\wee\對話框.png" class="img-dialog-bg">
+    <div class="img-dialog-text-container">
+        <div class="img-dialog-text">First, you have to check your curved</div>
+    </div>
+</div>
+
+    <img src="d:\lokk\wee\_20260509220947_23943_4.png" class="full-gif" id="gif1">
+    <img src="d:\lokk\wee\lo.gif" class="full-gif" id="gif2">
+
+    
+    <div id="dialogue" onclick="nextTalk()">
+        <div class="name">玩家</div>
+        <div class="talk-content" id="talkText"></div>
+        <div class="hint-continue">點擊這裡繼續</div>
+    </div>
+
+    <!-- 独立的结局对话框：点击即消失，不触发后续剧情 -->
+    <div id="ending-player-dialogue" onclick="this.style.display='none'">
+        <div class="talk-content" id="endingTalkText"></div>
+        <div class="hint-continue">點擊這裡繼續</div>
+    </div>
+
+    <div id="customDialog" onclick="customDialogNext()">
+        <div class="name" id="customName" style="display:none;"></div>
+        <div class="talk-content" id="customText"></div>
+        <div class="hint-continue">點擊這裡繼續</div>
+    </div>
+
+    <div id="centerPopup">
+        <img id="sprite" src="aaaa.GIF" alt="助手">
+    </div>
+    <div id="assistantText"></div>
+
+    <svg width="0" height="0">
+        <filter id="mosaic-filter">
+            <feFlood x="4" y="4" height="2" width="2"/>
+            <feComposite width="8" height="8"/>
+            <feTile result="tile"/>
+            <feComposite in="SourceGraphic" in2="tile" operator="in"/>
+            <feMorphology operator="dilate" radius="2"/>
+        </filter>
+
+        <!-- 水平撕裂：用高频纵向噪声去位移画面，做“断层/割裂” -->
+        <filter id="tear-filter" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence id="tear-turbulence"
+                type="fractalNoise"
+                baseFrequency="0.01 0.65"
+                numOctaves="1"
+                seed="2"
+                result="noise"/>
+            <feDisplacementMap id="tear-displace"
+                in="SourceGraphic"
+                in2="noise"
+                scale="28"
+                xChannelSelector="R"
+                yChannelSelector="G"/>
+        </filter>
+    </svg>
+
+    <div id="welcome-screen" class="screen active">
+        <div class="nav-grid">
+            <div class="nav-row nav-top">
+                <button class="pink-btn" onclick="showScreen('about-screen')">About "You"</button>
+                <button class="pink-btn" onclick="showScreen('feeling-screen')">Today's feeling</button>
+                <button class="pink-btn" onclick="showScreen('message-screen')">Today's message</button>
+            </div>
+            <div class="nav-row nav-bottom">
+                <button class="pink-btn" id="heart-nav-btn" onclick="showScreen('heart-screen')">HEART</button>
+                <button class="pink-btn" onclick="showScreen('situation-screen')">Current situation</button>
+                <button class="pink-btn" onclick="showScreen('reminder-screen')">Survival reminders</button>
+            </div>
+        </div>
+        <div class="center-hero">
+            <div class="brain-bg"></div>
+            <div class="sparkle" style="top: -30px; left: -30px;"></div>
+            <div class="sparkle" style="top: -30px; right: -30px; animation-delay: 0.5s;"></div>
+            <div class="sparkle" style="bottom: -30px; left: -30px; animation-delay: 1s;"></div>
+            <div class="sparkle" style="bottom: -30px; right: -30px; animation-delay: 0.2s;"></div>
+            <h1 class="welcome-title">Welcome</h1>
+            <div id="ending-actions" style="margin-top: 20px;">
+                <button class="pink-btn icon-btn" id="awake-btn" onclick="openPopup('awake')">Awake</button>
+                <button class="pink-btn icon-btn" id="sleep-btn" onclick="openPopup('sleep')">Sleep</button>
+            </div>
+        </div>
+    </div>
+
+<div id="about-screen" class="screen">
+    <style>
+        .about-wrapper {
+            width: 900px;
+            max-width: 95%;
+            border: 2px solid var(--pink-dark);
+            padding: 6px;
+            border-radius: 8px;
+            background: #ffffff;
+            box-sizing: border-box;
+            position: relative;
+        }
+         .about-inner {
+            border: 1px solid var(--pink);
+            border-radius: 4px;
+            display: flex;
+            align-items: stretch;
+            box-sizing: border-box;
+        }
+        .panel-left {
+            width: 50%;
+            border-right: 1px solid var(--pink);
+            padding: 35px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        .panel-right {
+            width: 50%;
+            padding: 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .integrated-panel {
+            border: 1px solid var(--pink);
+            border-radius: 6px;
+            padding: 15px;
+            background: rgba(255, 182, 193, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .input-group {
+            display: flex;
+            align-items: flex-end;
+            margin-bottom: 12px;
+        }
+        .input-group:last-of-type {
+            margin-bottom: 0;
+        }
+        .input-group label {
+            font-size: 14px;
+            color: var(--pink-dark);
+            font-weight: bold;
+            width: 130px;
+        }
+        .input-group input {
+            flex: 1;
+            border: none;
+            border-bottom: 1px solid var(--pink);
+            background: transparent;
+            outline: none;
+            color: #333;
+            font-size: 14px;
+            font-family: inherit;
+            padding-bottom: 2px;
+        }
+
+        .history-scroll {
+            height: 220px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 8px;
+        }
+        .history-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .history-scroll::-webkit-scrollbar-thumb {
+            background: var(--pink);
+            border-radius: 3px;
+        }
+        .history-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: flex-end;
+        }
+        .history-item .day-label {
+            color: var(--pink-dark);
+            font-size: 13px;
+            width: 100px;
+            font-weight: bold;
+        }
+        .history-item .day-line-text {
+            flex: 1;
+            border-bottom: 1px solid var(--pink);
+            color: #666;
+            font-size: 12px;
+            padding-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-height: 18px;
+        }
+
+        #emotion-slot {
+            color: var(--pink-dark);
+            font-size: 12px;
+            min-height: 20px;
+        }
+
+        .record-title {
+            color: var(--pink-dark);
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+        .photo-placeholder {
+            width: 80%;
+            aspect-ratio: 1;
+            border: 2px solid var(--pink);
+            background: rgba(255, 182, 193, 0.05);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .photo-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .photo-icon {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 15px;
+            height: 15px;
+            border: 1px solid var(--pink);
+            background: white;
+        }
+        .record-footer {
+            margin-top: 25px; 
+            color: var(--pink-dark);
+            font-size: 12px;
+            opacity: 0.8;
+        }
+    </style>
+
+    <div class="close-btn" onclick="backToMain()">X</div>
+    
+    <div class="about-wrapper">
+        <div class="about-inner">
+            <div class="panel-left">
+                <div class="integrated-panel">
+                    <div class="input-group">
+                        <label>Name:</label>
+                        <input type="text">
+                    </div>
+                    <div class="input-group">
+                        <label>Age:</label>
+                        <input type="text">
+                    </div>
+                    <div class="input-group">
+                        <label>Gender:</label>
+                        <input type="text">
+                    </div>
+                    <div class="input-group">
+                        <label>Today's event:</label>
+                        <input type="text" id="daily-action">
+                    </div>
+
+                    <div class="history-scroll">
+                        <div class="history-item">
+                            <div class="day-label">Today</div>
+                            <div class="day-line-text" id="current-date"></div>
+                        </div>
+                        <div id="emotion-slot"></div>
+                        
+                        <div class="history-item"><div class="day-label">2026-05-01</div><div class="day-line-text">I forgot how to breathe for a second.</div></div>
+                        <div class="history-item"><div class="day-label">2026-04-30</div><div class="day-line-text">The pink walls started singing.</div></div>
+                        <div class="history-item"><div class="day-label">2026-04-29</div><div class="day-line-text">Found a key in my pocket, but no door.</div></div>
+                        <div class="history-item"><div class="day-label">2026-04-28</div><div class="day-line-text">Stared at the cursor until it blinked back.</div></div>
+                        <div class="history-item"><div class="day-label">2026-04-27</div><div class="day-line-text">The wind whispered a name I don’t know.</div></div>
+                        <div class="history-item"><div class="day-label">2026-04-26</div><div class="day-line-text">A shadow followed me but refused to speak.</div></div>
+                        <div class="history-item"><div class="day-label">2026-04-25</div><div class="day-line-text">My reflection winked for no reason.</div></div>
+                        <div class="history-item"><div class="day-label">2026-04-24</div><div class="day-line-text">Time felt softer than usual today.</div></div>
+                        <div class="history-item"><div class="day-label">2026-04-23</div><div class="day-line-text">Heard music from an empty room.</div></div>
+                        <div class="history-item"><div class="day-label">2026-04-22</div><div class="day-line-text">The stars seemed closer tonight.</div></div>
+                        <div class="history-item"><div class="day-label">2026-04-21</div><div class="day-line-text">I lost a thought before I could say it.</div></div>
+                        <div class="history-item"><div class="day-label">2026-04-20</div><div class="day-line-text">A butterfly stayed on my hand for hours.</div></div>
+                    </div>
+                </div>
+            </div>
+
+          <div class="panel-right">
+             <div class="record-title">YOUR RECORD</div>
+             <div class="photo-placeholder">
+              <div class="photo-icon"></div>
+               <video 
+                src="d:\lokk\wee\ABGG.mp4" 
+                autoplay 
+                muted 
+               loop 
+              playsinline
+             style="width: 100%; height: 100%; object-fit: cover; border-radius: 2px;">
+             您的浏览器不支持 video 标签。
+              </video>
+           </div>
+          <div class="record-footer">(This is how we remember you)</div>
+           </div>
+        </div>
+    </div>
+</div>
+
+    <div id="feeling-screen" class="screen">
+        <div class="close-btn" onclick="userBackToMain()">X</div>
+        <div id="feeling-icon" style="cursor: pointer;">
+            <img id="feeling-img" src="d:\lokk\wee\IMG_5997.GIF" style="width: 150px; height: auto;">
+        </div>
+        <h2 id="feeling-text">Today's feeling is: Neutral</h2>
+    </div>
+
+    <div id="message-screen" class="screen">
+        <div class="close-btn" onclick="userBackToMain()">X</div>
+        <div id="message-area"></div>
+        <div id="trash-bin">
+            <img src="d:\lokk\wee\AAAASD.png" alt="trash">
+        </div>
+    </div>
+
+    <div id="heart-screen" class="screen">
+        <div class="close-btn" onclick="userBackToMain()">X</div>
+        <div id="heart-container">
+            <img id="heart-img" src="d:\lokk\wee\a'd'd'd.PNG" alt="heart">
+            <h3>heart rate：<span id="bpm-display">75</span>bpm</h3>
+            <h3>rotten rate：<span id="rotten-display">0</span>%</h3>
+        </div>
+    </div>
+
+    <div id="situation-screen" class="screen">
+        <div class="close-btn" onclick="userBackToMain()">X</div>
+        <div id="scratch-wrapper">
+            <div class="scratch-reveal-text">
+               You did <span id="nothing-link" style="text-decoration: underline; color: blue; cursor: pointer; margin: 0 10px;">nothing</span> today.
+            </div>
+        </div>
+    </div>
+
+    <div id="reminder-screen" class="screen">
+        <div class="close-btn" onclick="userBackToMain()">X</div>
+        <div id="reminder-area" style="width: 100%; height: 100%;"></div>
+    </div>
+
+    <div id="global-popup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="close-btn" onclick="closePopup()">X</div>
+            <h2 id="popup-text"></h2>
+            <div id="popup-extra"></div>
+        </div>
+    </div>
+
+    <script>
+// --- Global State ---
+const state = {
+    heartRate: 60,
+    rottenRate: 0,
+    currentEmotion: 'Neutral',
+    feelingClicks: 0,
+    heartClickCount: 0,
+    heartMax: 180,
+    isHeartRunaway: false,
+    isHeartPage: false,
+    popInterval: null,
+    glassEffect: null,
+    heartInterval: null,
+    customStep: 0,
+    aboutTaskDone: false,
+    feelingTaskDone: false,
+    feelingTaskActive: false,
+    messageTaskDone: false,
+    messageTaskActive: false,
+    heartTaskDone: false,
+    heartTaskActive: false,
+    // ✅ 是否已经关闭/看过 Current situation 指引
+    situationHintDone: false,
+    sleepClickCount: 0,
+    // ✅ 是否已经完成 Today's message 的拖动引导
+    messageGuideDone: false,
+    // ✅ Heart 页面引导是否已消失 + 是否已进入“中毒弹窗”剧情流程
+    heartGuideDone: false,
+    heartPoisonStarted: false,
+    // ✅ 中毒弹窗结束后：等用户按右上角 X 才触发「突闪剧情」（kk.PNG + 对话 + 黑化助手）
+    poisonStoryReady: false,
+    // ✅ 黑化助手结束回到 welcome 时，让主页面再“割裂”一下
+    tearOnNextWelcome: false,
+    // ✅ Survival reminders 结局是否已触发（拔完钉子后）
+    endingTriggered: false,
+    // 剧情解锁状态
+    unlockedStages: {
+        'about-screen': true,
+        'feeling-screen': false,
+        'message-screen': false,
+        'heart-screen': false,
+        'situation-screen': false,
+        'reminder-screen': false,
+        'sleep': false,
+        'awake': false,
+        'nothing': true
+    }
+};
+
+function unlockStage(stage) {
+    if (state.unlockedStages.hasOwnProperty(stage)) {
+        state.unlockedStages[stage] = true;
+        updateNavButtons();
+    }
+}
+
+function updateNavButtons() {
+    const navButtons = document.querySelectorAll('.nav-grid .pink-btn, #ending-actions .pink-btn');
+    navButtons.forEach(btn => {
+        const onclick = btn.getAttribute('onclick');
+        let stageId = '';
+        if (onclick) {
+            if (onclick.includes('showScreen')) {
+                stageId = onclick.match(/'([^']+)'/)[1];
+            } else if (onclick.includes('openPopup')) {
+                stageId = onclick.match(/'([^']+)'/)[1];
+            }
+        }
+        
+        if (stageId && stageId !== 'welcome-screen') {
+            if (!state.unlockedStages[stageId]) {
+                btn.classList.add('locked');
+            } else {
+                btn.classList.remove('locked');
+            }
+        }
+    });
+}
+
+function hideSituationHint() {
+    const dSituation = document.getElementById('situation-plot-dialog');
+    if (dSituation) dSituation.style.display = 'none';
+    state.situationHintDone = true;
+}
+
+const effStyle = document.createElement('style');
+effStyle.innerHTML = `
+@keyframes glassShake { 0%{transform:translate(0,0)} 25%{transform:translate(-2px,2px)} 50%{transform:translate(2px,-2px)} 75%{transform:translate(-2px,-2px)} 100%{transform:translate(2px,2px)} }
+@keyframes crazyBeat { 0%{transform:scale(1.2)} 50%{transform:scale(1.5)} 100%{transform:scale(1.2)} }
+.glass-break{ position:fixed;inset:0;background:rgba(255,255,255,0.2);backdrop-filter:blur(2px);z-index:9997;animation:glassShake 0.08s infinite;pointer-events:none; }
+
+.win-popup {
+    position: fixed;
+    width: 220px;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-top-color: #dfdfdf;
+    border-left-color: #dfdfdf;
+    border-right-color: #000;
+    border-bottom-color: #000;
+    font-family: "Microsoft Sans Serif", Tahoma, sans-serif;
+    font-size: 12px;
+    z-index: 9999;
+}
+.win-title {
+    background: #000080;
+    color: #fff;
+    padding: 3px 6px;
+    font-weight: bold;
+}
+.win-content {
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.win-icon {
+    font-size: 22px;
+    color: red;
+}
+.win-text {
+    color: #000;
+    font-size: 12px;
+}
+.win-button {
+    text-align: center;
+    padding: 0 0 8px;
+}
+.win-button button {
+    width: 65px;
+    padding: 2px 0;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-top-color: #fff;
+    border-left-color: #fff;
+    border-right-color: #000;
+    border-bottom-color: #000;
+    cursor: pointer;
+    font-family: inherit;
+}
+`;
+document.head.appendChild(effStyle);
+
+function positionHeartPlotDialog() {
+    const dlg = document.getElementById('heart-plot-dialog');
+    const btn = document.getElementById('heart-nav-btn');
+    if (!dlg || !btn || dlg.style.display === 'none') return;
+
+    requestAnimationFrame(() => {
+        const r = btn.getBoundingClientRect();
+        const dlgRect = dlg.getBoundingClientRect();
+        const padding = 12;
+        const margin = 10;
+
+        // 目标：对话框在 HEART 按钮右侧，并尽量垂直居中
+        let left = r.right + padding;
+        let top = r.top + (r.height - dlgRect.height) / 2;
+
+        // 防止跑出屏幕
+        left = Math.min(left, window.innerWidth - dlgRect.width - margin);
+        left = Math.max(margin, left);
+        top = Math.min(top, window.innerHeight - dlgRect.height - margin);
+        top = Math.max(margin, top);
+
+        dlg.style.left = left + 'px';
+        dlg.style.top = top + 'px';
+    });
+}
+
+window.addEventListener('resize', positionHeartPlotDialog);
+
+function positionHeartPageGuideDialog() {
+    const dlg = document.getElementById('heart-page-rotten-text');
+    const heart = document.getElementById('heart-img');
+    if (!dlg || !heart || dlg.style.display === 'none') return;
+
+    requestAnimationFrame(() => {
+        const r = heart.getBoundingClientRect();
+        const dlgRect = dlg.getBoundingClientRect();
+        const padding = 12;
+        const margin = 10;
+
+        // 目标：对话框在心脏图片左侧，并尽量垂直居中
+        let left = r.left - dlgRect.width - padding;
+        let top = r.top + (r.height - dlgRect.height) / 2;
+
+        // 防止跑出屏幕
+        left = Math.min(left, window.innerWidth - dlgRect.width - margin);
+        left = Math.max(margin, left);
+        top = Math.min(top, window.innerHeight - dlgRect.height - margin);
+        top = Math.max(margin, top);
+
+        dlg.style.left = left + 'px';
+        dlg.style.top = top + 'px';
+    });
+}
+
+window.addEventListener('resize', positionHeartPageGuideDialog);
+
+function showScreen(id) {
+    // 检查是否已解锁（welcome-screen 始终允许进入）
+    if (id !== 'welcome-screen' && !state.unlockedStages[id]) {
+        console.log('Stage locked: ' + id);
+        return;
+    }
+
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+
+    const dMain = document.getElementById('main-plot-dialog');
+    const dAboutPage = document.getElementById('about-page-dialog');
+    const dFeeling = document.getElementById('feeling-plot-dialog');
+    const dMessage = document.getElementById('message-plot-dialog');
+    const dMessagePage = document.getElementById('message-page-dialog');
+    const dHeart = document.getElementById('heart-plot-dialog');
+    const dHeartPage = document.getElementById('heart-page-rotten-text');
+    const dSituation = document.getElementById('situation-plot-dialog');
+
+    // ✅ 进入 Current situation 页面时：隐藏指引并标记为已完成
+    if (id === 'situation-screen') {
+        if (dSituation) dSituation.style.display = 'none';
+        state.situationHintDone = true;
+        // 进入 Current Situation 后解锁 Survival Reminders
+        unlockStage('reminder-screen');
+    }
+
+    if (id === 'about-screen') {
+        if (dMain) dMain.style.display = 'none';
+        if (dAboutPage) dAboutPage.style.display = 'block';
+        state.aboutTaskDone = true;
+        // 完成 About You 后解锁 Today's Feeling
+        unlockStage('feeling-screen');
+    } 
+    else if (id === 'feeling-screen') {
+        if (dFeeling) dFeeling.style.display = 'none';
+        state.feelingTaskDone = true; 
+        // ✅ 确保 About You 里生成的情绪，会同步显示在 Today's feeling 页面
+        updateFeelingUI();
+        // 完成 Today's Feeling 后解锁 Today's Message
+        unlockStage('message-screen');
+    } 
+    else if (id === 'message-screen') {
+        if (dMessage) dMessage.style.display = 'none';
+        // 只在第一次进入/未触发拖动前显示引导
+        if (dMessagePage && !state.messageGuideDone) dMessagePage.style.display = 'block';
+        if (dMessagePage && state.messageGuideDone) dMessagePage.style.display = 'none';
+        state.messageTaskActive = true;
+        state.messageTaskDone = true;
+        startSpawningMessages();
+        // 完成 Today's Message 后解锁 Heart
+        unlockStage('heart-screen');
+    }
+    else if (id === 'heart-screen') {
+        [dMain, dAboutPage, dFeeling, dMessage, dMessagePage, dHeart].forEach(d => { if(d) d.style.display='none'; });
+        // 只在第一次進入 Heart（且還沒點擊心臟前）顯示引導
+        if (dHeartPage && !state.heartGuideDone) {
+            dHeartPage.style.display = 'block';
+            positionHeartPageGuideDialog();
+        }
+        if (dHeartPage && state.heartGuideDone) dHeartPage.style.display = 'none';
+        state.heartTaskActive = true;
+        state.heartTaskDone = true;
+        // 完成 Heart 后解锁 Current Situation
+        unlockStage('situation-screen');
+
+        // ✅ 每次进入 Heart 页面都重置“中毒弹窗触发”计数，确保第一次点心脏就触发
+        state.heartClickCount = 0;
+        state.heartPoisonStarted = false;
+        state.isHeartRunaway = false;
+        document.querySelectorAll('.win-popup, .glass-break').forEach(el => el.remove());
+        resetHeartBeat();
+    }
+    else if (id === 'welcome-screen') {
+        if (dAboutPage) dAboutPage.style.display = 'none';
+        if (dMessagePage) dMessagePage.style.display = 'none';
+        if (dHeartPage) dHeartPage.style.display = 'none';
+
+        if (state.aboutTaskDone && !state.feelingTaskDone && !state.feelingTaskActive) {
+            if (dFeeling) dFeeling.style.display = 'block';
+            state.feelingTaskActive = true;
+        }
+        else if (state.feelingTaskDone && state.feelingTaskActive) {
+            if (dFeeling) dFeeling.style.display = 'none';
+            if (dMessage) dMessage.style.display = 'block';
+            state.feelingTaskActive = false; 
+        }
+        else if (state.messageTaskDone && !state.heartTaskDone) {
+            if (dMessage) dMessage.style.display = 'none';
+            if (dHeart) {
+                dHeart.style.display = 'block';
+                positionHeartPlotDialog();
+            }
+        }
+        else if (state.heartTaskDone) {
+            if (dHeart) dHeart.style.display = 'none';
+            // 只在第一次（或未关闭过）时显示指引
+            if (dSituation && !state.situationHintDone) dSituation.style.display = 'block';
+            if (dSituation && state.situationHintDone) dSituation.style.display = 'none';
+        }
+    } 
+    else {
+        [dMain, dAboutPage, dFeeling, dMessage, dMessagePage, dHeart, dHeartPage, dSituation].forEach(d => { if(d) d.style.display='none'; });
+    }
+
+    if (id === 'heart-screen') {
+        state.isHeartPage = true;
+    } else {
+        state.isHeartPage = false;
+        if (state.popInterval) clearInterval(state.popInterval);
+        if (state.heartInterval) clearInterval(state.heartInterval);
+        document.querySelectorAll('.win-popup, .glass-break').forEach(el => el.remove());
+        resetHeartBeat();
+    }
+    if(id === 'reminder-screen') initReminders();
+}
+
+function backToMain() {
+    showScreen('welcome-screen');
+    // 只在“中毒剧情结束回到主页面”时触发一次割裂
+    if (state.tearOnNextWelcome) {
+        state.tearOnNextWelcome = false;
+        playWelcomeGlitch();
+    }
+}
+
+function triggerPoisonStory() {
+    // 「突闪」= kk.PNG 以“闪-黑-闪”的方式快速跳一下（更吓人）+ 接后续对话剧情
+    const gif = document.getElementById('gif1');
+    if (!gif) {
+        startStoryDialog();
+        return;
+    }
+
+    // 多段快速闪烁：模拟参考视频那种突然一吓
+    const seq = [
+        { on: true,  dur: 70 },
+        { on: false, dur: 40 },
+        { on: true,  dur: 70 },
+        { on: false, dur: 55 },
+        { on: true,  dur: 90 },
+        { on: false, dur: 0  }
+    ];
+
+    let t = 0;
+    seq.forEach(s => {
+        setTimeout(() => { gif.style.display = s.on ? 'block' : 'none'; }, t);
+        t += s.dur;
+    });
+    setTimeout(() => {
+        gif.style.display = 'none';
+        startStoryDialog();
+    }, t + 20);
+}
+
+// 只用于“用户点击右上角 X”的退出：如果准备好突闪剧情，就先播放剧情（并在剧情结束后自动回主页面）
+function userBackToMain() {
+    if (state.poisonStoryReady) {
+        state.poisonStoryReady = false;
+        triggerPoisonStory();
+        return;
+    }
+    backToMain();
+}
+
+function getRandomPopupPos() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    // ✅ 防止小屏幕时出现负数，导致弹窗生成到屏幕外
+    const maxLeft = Math.max(10, w - 280);
+    const maxTop = Math.max(10, h - 180);
+    return {
+        left: 10 + Math.random() * (maxLeft - 10),
+        top: 10 + Math.random() * (maxTop - 10)
+    };
+}
+
+function showWinPopup(step) {
+    if (!state.isHeartPage) return;
+
+    const pos = getRandomPopupPos();
+    const el = document.createElement('div');
+    el.className = 'win-popup';
+    // ✅ 第一个弹窗固定居中，避免“已经触发但你看不到”
+    if (step === 1) {
+        el.style.left = '50%';
+        el.style.top = '40%';
+        el.style.transform = 'translate(-50%, -50%)';
+    } else {
+        el.style.left = pos.left + 'px';
+        el.style.top = pos.top + 'px';
+    }
+
+    let text = (step === 1 || step === 2) ? "Are you happy?" : "You are happy";
+
+    el.innerHTML = `
+    <div class="win-title">Error</div>
+    <div class="win-content">
+        <div class="win-icon">❌</div>
+        <div class="win-text">${text}</div>
+    </div>
+    <div class="win-button">
+        <button class="btn-no">NO</button>
+    </div>
+    `;
+
+    document.body.appendChild(el);
+
+    el.querySelector('.btn-no').onclick = () => {
+        el.remove();
+        if (step < 3) {
+            showWinPopup(step + 1);
+        } else {
+            fullHeartRate();
+            startGlassBreak();
+            startCrazyHeartBeat();
+            
+            startColumnFirstPopup();
+
+            setTimeout(() => {
+                clearInterval(state.popInterval);
+                document.querySelectorAll('.win-popup, .glass-break').forEach(e => e.remove());
+                
+                // ✅ 改成 10 秒後觸發玩家與助手劇情（更快進入）
+                // ✅ 不在这里直接播放；改成“弹窗结束后，用户按退出键才触发突闪剧情”
+                state.poisonStoryReady = true;
+            }, 10000);
+        }
+    };
+}
+
+function playGif(num, time) {
+    const gif = document.getElementById(`gif${num}`);
+    gif.style.display = "block";
+    setTimeout(() => gif.style.display = "none", time);
+}
+
+document.getElementById('heart-img').onclick = function () {
+    if(!state.isHeartPage || state.isHeartRunaway) return;
+
+    // ✅ 仍然维持“点 10 次才触发”的逻辑；触发后不再重复触发
+    if (state.heartPoisonStarted) return;
+
+    state.heartClickCount++;
+    state.heartRate = Math.min(state.heartRate + 8, state.heartMax - 20);
+    updateHeartUI();
+
+    // 第 1 次点击：Heart 引导消失
+    if (state.heartClickCount === 1) {
+        const heartGuide = document.getElementById('heart-page-rotten-text');
+        if (heartGuide) heartGuide.style.display = 'none';
+        state.heartGuideDone = true;
+    }
+
+    // 第 10 次点击：中毒弹窗出现
+    if (state.heartClickCount >= 10) {
+        state.heartPoisonStarted = true;
+        showWinPopup(1);
+    }
+};
+
+function fullHeartRate() {
+    state.heartRate = state.heartMax;
+    updateHeartUI();
+}
+
+function resetHeartBeat() {
+    state.isHeartRunaway = false;
+    const heart = document.getElementById('heart-img');
+    if(heart) heart.style.animation = "beat 1s infinite ease-in-out";
+}
+
+function startCrazyHeartBeat() {
+    state.isHeartRunaway = true;
+    const heart = document.getElementById('heart-img');
+    if(heart) heart.style.animation = "crazyBeat 0.2s infinite";
+}
+
+function updateHeartUI() {
+    const el = document.getElementById('bpm-display');
+    if(el) el.innerText = state.heartRate;
+}
+
+function startGlassBreak(){
+    if (!state.isHeartPage) return;
+    const glass = document.createElement('div');
+    glass.className = 'glass-break';
+    document.body.appendChild(glass);
+}
+
+function startColumnFirstPopup() {
+    if (!state.isHeartPage) return;
+
+    const popW = 220;
+    const popH = 60;
+    const baseSlope = 18;
+    // ✅ 10 秒內更密集地出現：略降總量但加快速度
+    const maxTotal = 1200;
+    const perCol = Math.floor(window.innerHeight / (popH - 40)) + 12;
+    let idx = 0;
+
+    state.popInterval = setInterval(() => {
+        if (!state.isHeartPage) return;
+        if (idx >= maxTotal) {
+            clearInterval(state.popInterval);
+            return;
+        }
+
+        const col = Math.floor(idx / perCol);
+        const row = idx % perCol;
+
+        let dir = col % 2 === 0 ? 1 : -1;
+        let randomOffset = (Math.random() - 0.5) * 12;
+        let slope = baseSlope * dir + randomOffset;
+
+        let colGap = (popW - 85) + (Math.random() - 0.5) * 30;
+        let rowGap = (popH - 40) + (Math.random() - 0.5) * 15;
+
+        let left = col * colGap + row * slope;
+        let top = row * rowGap;
+
+        const p = document.createElement('div');
+        p.className = 'win-popup';
+        p.style.left = left + 'px';
+        p.style.top = top + 'px';
+        p.style.zIndex = 10000 + idx;
+
+        p.innerHTML = `
+        <div class="win-title">Error</div>
+        <div class="win-content">
+            <div class="win-icon">❌</div>
+            <div class="win-text">you are happy</div>
+        </div>
+        `;
+
+        document.body.appendChild(p);
+        idx++;
+    }, 8);
+}
+
+function flashScreenThreeTimes(done) {
+    const f1 = document.createElement('div');
+    f1.className = 'screen-flash';
+    const f2 = f1.cloneNode();
+    const f3 = f1.cloneNode();
+    document.body.append(f1, f2, f3);
+
+    // 更均匀的节奏：闪(150ms) - 间隔(150ms) - 闪(150ms) - 间隔(150ms) - 闪(150ms)
+    f1.style.display = 'block';
+    setTimeout(() => f1.remove(), 150);
+
+    setTimeout(() => { f2.style.display = 'block'; }, 300);
+    setTimeout(() => f2.remove(), 450);
+
+    setTimeout(() => { f3.style.display = 'block'; }, 600);
+    setTimeout(() => f3.remove(), 750);
+
+    if (typeof done === 'function') setTimeout(done, 760);
+}
+
+function startStoryDialog() {
+    document.getElementById('talkText').innerText = "What is this...?";
+    document.getElementById('dialogue').style.display = "block";
+    // 普通助手立绘先出来（避免玩家太快点掉对话导致看不到）
+    document.getElementById('centerPopup').style.display = "block";
+    document.getElementById('assistantText').style.display = "block";
+    document.getElementById('assistantText').innerText = "OH MY what happened ";
+}
+
+function nextTalk() {
+    document.getElementById('dialogue').style.display = "none";
+    document.getElementById('centerPopup').style.display = "none";
+    document.getElementById('assistantText').style.display = "none";
+    
+    // 播放新的 GIF (lo.gif)
+    playGif(2, 1500); // 稍微延长一点展示时间
+    
+    // 准备返回主页面
+    state.tearOnNextWelcome = true;
+    
+    // 在 GIF 播放快结束时开始淡出或平滑切换
+    setTimeout(() => {
+        // 触发撕裂效果并返回主页
+        startTearEffect(400); // 稍微加长撕裂效果以掩盖切换
+        backToMain();
+    }, 1300);
+}
+
+function playScare(done) {
+    if (typeof done === 'function') done();
+}
+
+function playWelcomeGlitch(done) {
+    if (typeof done === 'function') done();
+}
+
+function startTearEffect(ms = 260) {
+    const app = document.getElementById('app');
+    if (!app) return;
+    const turb = document.getElementById('tear-turbulence');
+    const disp = document.getElementById('tear-displace');
+
+    app.classList.add('tear-active');
+
+    // 动态抖动噪声参数，制造“水平撕裂条”随机跳动感
+    let timer = null;
+    if (turb && disp) {
+        timer = setInterval(() => {
+            const seed = Math.floor(Math.random() * 1000);
+            const yFreq = (0.45 + Math.random() * 0.55).toFixed(2); // 0.45~1.00
+            const scale = Math.floor(18 + Math.random() * 26); // 18~44
+            turb.setAttribute('seed', String(seed));
+            turb.setAttribute('baseFrequency', `0.01 ${yFreq}`);
+            disp.setAttribute('scale', String(scale));
+        }, 60);
+    }
+
+    setTimeout(() => {
+        if (timer) clearInterval(timer);
+        app.classList.remove('tear-active');
+        // 还原到默认，避免残留
+        if (turb) turb.setAttribute('baseFrequency', '0.01 0.65');
+        if (disp) disp.setAttribute('scale', '28');
+    }, ms);
+}
+
+function openPopup(type) {
+    // 检查解锁状态
+    if (!state.unlockedStages[type]) {
+        console.log('Action locked: ' + type);
+        return;
+    }
+    const overlay = document.getElementById('global-popup');
+    const text = document.getElementById('popup-text');
+    const extra = document.getElementById('popup-extra');
+    const content = document.querySelector('.popup-content');
+    
+    overlay.style.display = 'flex';
+    text.className = 'blur-text';
+    extra.innerHTML = ''; 
+    content.onclick = null;
+
+    if(type === 'awake') {
+        text.innerText = "⚠️ ERROR ⚠️";
+        text.className = "";
+        setupAwakeError(); 
+    }
+    if(type === 'sleep') {
+        text.innerText = "you don’t want to sleep.";
+        state.sleepClickCount = 0;
+        content.onclick = (e) => {
+            e.stopPropagation();
+            state.sleepClickCount++;
+            if(state.sleepClickCount === 1) {
+                const nextText = document.createElement('div');
+                nextText.className = 'sleep-overlay-text';
+                nextText.innerText = "you can’t sleep.";
+                text.classList.add('sleep-under-text');
+                content.appendChild(nextText);
+            }
+        };
+    }
+    if(type === 'nothing') {
+        text.className = "";
+        text.innerText = "you are nothing.";
+        extra.innerHTML = `<button class="small-close-btn" onclick="closeNothingPopup()">Close</button>`;
+    }
+}
+
+function setupAwakeError() {
+    const extra = document.getElementById('popup-extra');
+    extra.style.position = 'relative';
+    extra.style.height = '350px';
+    extra.style.width = '450px';
+    
+    const baseText = "non-existent option";
+    
+    extra.innerHTML = `
+        <div id="awake-initial-text" style="margin-top: 40px; font-size: 36px; color: var(--pink-dark); font-family: 'Courier New'; cursor: pointer; text-align: center; font-weight: bold;">
+            ${baseText}
+        </div>
+        <!-- 全屏散点拼字槽位 -->
+        <div id="help-slots" style="display: none; position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none;">
+            <div class="help-target" data-letter="H" style="position: absolute; left: 15%; top: 25%; border: 2px dashed var(--pink); border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; color: rgba(255,182,193,0.2); font-size: 30px;">H</div>
+            <div class="help-target" data-letter="E" style="position: absolute; right: 15%; top: 20%; border: 2px dashed var(--pink); border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; color: rgba(255,182,193,0.2); font-size: 30px;">E</div>
+            <div class="help-target" data-letter="L" style="position: absolute; left: 20%; bottom: 20%; border: 2px dashed var(--pink); border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; color: rgba(255,182,193,0.2); font-size: 30px;">L</div>
+            <div class="help-target" data-letter="P" style="position: absolute; right: 20%; bottom: 25%; border: 2px dashed var(--pink); border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; color: rgba(255,182,193,0.2); font-size: 30px;">P</div>
+        </div>
+        <div id="error-letters-container"></div>
+        <div class="long-press-hint" id="long-press-hint">LONG PRESS TO WAKE UP</div>
+        <div class="progress-bar-container" id="progress-bar-container">
+            <div id="long-press-progress"></div>
+        </div>
+    `;
+
+    const initialText = document.getElementById('awake-initial-text');
+    initialText.onclick = () => {
+        initialText.style.display = 'none';
+        document.getElementById('help-slots').style.display = 'flex';
+        scatterAwakeFragments();
+    };
+}
+
+function scatterAwakeFragments() {
+    const container = document.getElementById('error-letters-container');
+    const baseText = "non-existent option";
+    const targetLetters = ['H', 'E', 'L', 'P'];
+    const availableChars = baseText.split('').filter(c => c !== ' ');
+    
+    // 生成文案字符碎片，全屏散开，避免堆叠
+    availableChars.forEach((char) => {
+        const el = document.createElement('div');
+        el.className = 'fragment';
+        el.innerText = char;
+        // 随机分布在弹窗内的大部分区域，但避开槽位正中心
+        el.style.left = (Math.random() * 400) + 'px';
+        el.style.top = (Math.random() * 120) + 'px'; 
+        container.appendChild(el);
+        initLetterDraggable(el);
+    });
+
+    // 额外生成 H E L P 碎片，散布在不同区域
+    targetLetters.forEach((char, idx) => {
+        const el = document.createElement('div');
+        el.className = 'fragment';
+        el.style.fontWeight = 'bold';
+        el.innerText = char;
+        // 刻意分散
+        el.style.left = (idx * 100 + Math.random() * 50) + 'px';
+        el.style.top = (280 + Math.random() * 40) + 'px'; // 放在底部区域，远离上方碎片
+        container.appendChild(el);
+        initLetterDraggable(el);
+    });
+}
+
+function initLetterDraggable(el) {
+    let isDragging = false;
+    let startX, startY;
+
+    el.addEventListener('pointerdown', (e) => {
+        isDragging = true;
+        startX = e.clientX - el.offsetLeft;
+        startY = e.clientY - el.offsetTop;
+        el.setPointerCapture(e.pointerId);
+    });
+
+    el.addEventListener('pointermove', (e) => {
+        if(!isDragging) return;
+        const x = e.clientX - startX;
+        const y = e.clientY - startY;
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        checkLetterMatch(el);
+    });
+
+    el.addEventListener('pointerup', () => {
+        isDragging = false;
+    });
+}
+
+function checkLetterMatch(el) {
+    const targets = document.querySelectorAll('.help-target');
+    // 获取拖拽物体的中心点，这样判定更灵敏
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    targets.forEach(t => {
+        const tRect = t.getBoundingClientRect();
+        // 判定中心点是否进入槽位范围内
+        if (cx > tRect.left && cx < tRect.right && cy > tRect.top && cy < tRect.bottom) {
+            // 如果字母匹配且槽位还没被填入
+            if (t.dataset.letter === el.innerText.trim() && (t.innerText === t.dataset.letter || t.innerText === "")) {
+                // 成功放入
+                t.innerText = el.innerText;
+                t.style.color = "var(--pink-dark)";
+                t.style.background = "rgba(255,182,193,0.3)";
+                t.style.borderColor = "var(--pink-dark)";
+                el.remove();
+                checkHelpComplete();
+            }
+        }
+    });
+}
+
+let longPressTimer = null;
+let longPressStartTime = 0;
+const LONG_PRESS_DURATION = 2000; // 2秒
+
+function checkHelpComplete() {
+    const targets = document.querySelectorAll('.help-target');
+    const complete = Array.from(targets).every(t => t.innerText !== '');
+    if (complete) {
+        const hint = document.getElementById('long-press-hint');
+        const progressContainer = document.getElementById('progress-bar-container');
+        if (hint) hint.style.display = 'block';
+        if (progressContainer) progressContainer.style.display = 'block';
+        
+        // 绑定长按事件到整个弹窗内容
+        const content = document.querySelector('.popup-content');
+        content.addEventListener('pointerdown', startLongPress);
+        window.addEventListener('pointerup', cancelLongPress);
+    }
+}
+
+function startLongPress(e) {
+    longPressStartTime = Date.now();
+    const progressBar = document.getElementById('long-press-progress');
+    
+    longPressTimer = setInterval(() => {
+        const elapsed = Date.now() - longPressStartTime;
+        const progress = Math.min((elapsed / LONG_PRESS_DURATION) * 100, 100);
+        if (progressBar) progressBar.style.width = progress + '%';
+        
+        if (elapsed >= LONG_PRESS_DURATION) {
+            clearInterval(longPressTimer);
+            window.location.href = "page2.html?showNotes=true";
+        }
+    }, 100);
+}
+
+function cancelLongPress() {
+    if (longPressTimer) {
+        clearInterval(longPressTimer);
+        longPressTimer = null;
+        const progressBar = document.getElementById('long-press-progress');
+        if (progressBar) progressBar.style.width = '0%';
+    }
+}
+
+function closePopup() {
+    document.getElementById('global-popup').style.display = "none";
+    document.getElementById('popup-extra').innerHTML = '';
+    const content = document.querySelector('.popup-content');
+    content.onclick = null;
+    const overlays = content.querySelectorAll('.sleep-overlay-text');
+    overlays.forEach(o => o.remove());
+    const text = document.getElementById('popup-text');
+    text.classList.remove('sleep-under-text');
+}
+
+function closeNothingPopup() {
+    closePopup();
+    backToMain();
+    state.customStep = 0;
+    
+    document.getElementById('centerPopup').style.display = 'block';
+    document.getElementById('customDialog').style.display = 'block';
+    document.getElementById('customText').innerText = "Now, it’s the last step .";
+}
+
+function customDialogNext() {
+    state.customStep++;
+    if(state.customStep === 1){
+        document.getElementById('customText').innerText = "To keep you ALive ,I wrote down some reminder.";
+    }else{
+        document.getElementById('customDialog').style.display = 'none';
+        document.getElementById('centerPopup').style.display = 'none';
+    }
+}
+
+function hideAssistant() {
+    document.getElementById('centerPopup').style.display = 'none';
+    document.getElementById('assistantText').style.display = 'none';
+}
+
+document.getElementById('current-date').innerText = new Date().toLocaleDateString();
+
+function previewImage(event) {
+    const img = document.getElementById('user-ph');
+    if(img) {
+        img.src = URL.createObjectURL(event.target.files[0]);
+        img.style.display = 'block';
+    }
+}
+
+document.getElementById('daily-action').addEventListener('change', function(e) {
+    if(!e.target.value) return;
+    const emotions = ['sadness', 'anxiety', 'fear'];
+    const randomEmo = emotions[Math.floor(Math.random() * emotions.length)];
+    const slot = document.getElementById('emotion-slot');
+    slot.innerHTML = `<div class="emotion-bubble" id="new-emo">${randomEmo}</div>`;
+    initDraggable(document.getElementById('new-emo'), 'eat');
+
+    // ✅ About You 里生成的心情结果，同步到 Today's feeling，并匹配对应表情包
+    consumeEmotion(randomEmo);
+});
+
+function initDraggable(el, type) {
+    let isDragging = false;
+    let longPressTimer;
+    let startX, startY;
+
+    el.addEventListener('pointerdown', (e) => {
+        if(e.target.classList.contains('pin')) return;
+
+        // ✅ 在 Today's message 里开始拖动任何信息气泡时，隐藏引导对话框
+        if (type === 'message' && !state.messageGuideDone) {
+            const guide = document.getElementById('message-page-dialog');
+            if (guide) guide.style.display = 'none';
+            state.messageGuideDone = true;
+        }
+        
+        isDragging = true;
+        startX = e.clientX - el.offsetLeft;
+        startY = e.clientY - el.offsetTop;
+        el.setPointerCapture(e.pointerId);
+
+        longPressTimer = setTimeout(() => {
+            if(isDragging) el.classList.add('zoomed');
+        }, 600);
+    });
+
+    el.addEventListener('pointermove', (e) => {
+        if(!isDragging) return;
+        const x = e.clientX - startX;
+        const y = e.clientY - startY;
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        el.style.position = 'absolute';
+
+        if(type === 'message') {
+            checkTrash(el);
+        }
+    });
+
+    el.addEventListener('pointerup', () => {
+        isDragging = false;
+        clearTimeout(longPressTimer);
+        el.classList.remove('zoomed');
+    });
+}
+
+function consumeEmotion(emo) {
+    state.currentEmotion = emo;
+    updateFeelingUI();
+}
+
+// ✅ 统一刷新 Today's feeling 的文字与表情（根据 state.currentEmotion）
+function updateFeelingUI() {
+    const emo = state.currentEmotion || 'Neutral';
+    const textEl = document.getElementById('feeling-text');
+    const iconEl = document.getElementById('feeling-icon');
+    if (textEl) textEl.innerText = `Today's feeling is: ${emo}`;
+
+    // 只对已定义的情绪匹配表情；否则回到默认
+    const imgEl = document.getElementById('feeling-img');
+    if (imgEl) {
+        if (emo.toLowerCase() === 'neutral') {
+            imgEl.src = 'd:\\lokk\\wee\\IMG_5997.GIF';
+        } else {
+            imgEl.src = 'Emoji.gif';
+        }
+    }
+}
+
+document.getElementById('nothing-link').addEventListener('click', () => {
+    openPopup('nothing');
+});
+
+document.getElementById('feeling-icon').addEventListener('click', () => {
+    state.feelingClicks++;
+    if(state.feelingClicks >= 10) {
+        state.feelingClicks = 0;
+        showHappyPopup();
+    }
+});
+
+function showHappyPopup() {
+    const overlay = document.getElementById('global-popup');
+    const extra = document.getElementById('popup-extra');
+    document.getElementById('popup-text').innerText = "Select your mood";
+    document.getElementById('popup-text').className = "";
+    overlay.style.display = 'flex';
+    extra.innerHTML = `
+        <div style="margin-top:20px; text-align:left;">
+            <label><input type="checkbox" class="h-cb"> HAPPY</label><br>
+            <label><input type="checkbox" class="h-cb"> HAPPY</label><br>
+            <label><input type="checkbox" class="h-cb"> HAPPY</label><br>
+            <label><input type="checkbox" class="h-cb"> HAPPY</label><br>
+            <button class="pink-btn" style="margin-top:15px" onclick="submitHappy()">Submit</button>
+        </div>
+    `;
+}
+
+function submitHappy() {
+    document.getElementById('popup-extra').innerHTML = "";
+    document.getElementById('popup-text').innerText = "Are you really HAPPY?";
+}
+
+let spawnInterval;
+let currentDelay = 1000;
+const minDelay = 200;
+const speedStep = 80;
+
+function startSpawningMessages() {
+    if(spawnInterval) return;
+    const area = document.getElementById('message-area');
+    const texts = ["Am I real?", "Help me", "Don't wake up", "It's pink here", "I'm scared", "Nothing is wrong"];
+    
+    spawnInterval = setInterval(() => {
+        if(!document.getElementById('message-screen').classList.contains('active')) return;
+        const m = document.createElement('div');
+        m.className = 'msg-bubble';
+        m.innerText = texts[Math.floor(Math.random()*texts.length)];
+        m.style.left = Math.random() * 80 + '%';
+        m.style.top = Math.random() * 80 + '%';
+        area.appendChild(m);
+        initDraggable(m, 'message');
+    }, currentDelay);
+}
+
+function checkTrash(el) {
+    const bin = document.getElementById('trash-bin').getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+    if(rect.left < bin.right && rect.right > bin.left && rect.top < bin.bottom && rect.top < bin.bottom) {
+        el.classList.add('sucking');
+        setTimeout(() => {
+            el.remove();
+            if(currentDelay > minDelay){
+                currentDelay -= speedStep;
+                currentDelay = Math.max(currentDelay, minDelay);
+                clearInterval(spawnInterval);
+                spawnInterval = null;
+                startSpawningMessages();
+            }
+        }, 500);
+    }
+}
+
+document.getElementById('nothing-link').addEventListener('click', () => {
+    openPopup('nothing');
+});
+
+function initReminders() {
+    const area = document.getElementById('reminder-area');
+    area.innerHTML = '';
+    const hints = ["Stay away from the mirror", "Emotions are food", "Pink is safe", "The brain is blurry", "Don't count the stars", "Check your heart rate", "Nothing is everything", "Listen to the beat", "The trash is hungry", "Survival is a choice", "Wake up soon", "Or don't"];
+    const colors = ['#FFF9C4', '#F8BBD0', '#C8E6C9', '#B3E5FC', '#FFE0B2'];
+    const pinImages = ["d:\\lokk\\wee\\IMG_5988.PNG", "d:\\lokk\\wee\\IMG_5987.PNG", "d:\\lokk\\wee\\IMG_5988.PNG"];
+
+    // 生成“槽位”位置：围绕中心的网格布局（避免互相遮挡/叠在一起）
+    const areaRect = area.getBoundingClientRect();
+    const noteW = 150, noteH = 150;
+    const margin = 18;
+    const cols = 4;
+    const rows = 3;
+    const cellWidth = 100 / cols;
+    const cellHeight = 100 / rows;
+
+    hints.forEach((h, i) => {
+        const n = document.createElement('div');
+        n.className = 'sticky-note';
+        n.innerText = h; 
+
+        const pinImg = document.createElement('img');
+        pinImg.className = 'pin';
+        pinImg.src = pinImages[Math.floor(Math.random() * pinImages.length)];
+        
+        pinImg.onclick = (e) => {
+            e.stopPropagation();
+            pinImg.style.transform = 'translate(-50%, -120%) scale(0)';
+            pinImg.style.opacity = '0';
+            n.classList.add('note-fall');
+            setTimeout(() => {
+                n.remove();
+                checkReminderEnding();
+            }, 500);
+        };
+
+        n.appendChild(pinImg);
+        n.style.backgroundColor = colors[i % colors.length];
+        
+        // 复刻参考图：带抖动的网格布局
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        
+        // 紧凑错落：缩小网格间距，增加重叠感但保持秩序
+        const jitterX = (Math.random() * 18 - 9); // +/- 9% (更大抖动，产生靠近感)
+        const jitterY = (Math.random() * 14 - 7); // +/- 7%
+        const posX = 15 + (col * 23) + jitterX; // 缩小间距系数
+        const posY = 15 + (row * 23) + jitterY;
+        const rot = (Math.random() * 20 - 10); // 增加旋转角度
+        
+        n.style.left = posX + '%';
+        n.style.top = posY + '%';
+        n.style.transform = `translate(-50%, -50%) rotate(${rot}deg)`;
+        n.style.zIndex = i; // 产生自然的堆叠层次感
+        
+        area.appendChild(n);
+        initDraggable(n, 'reminder');
+    });
+}
+
+// ✅ 拔完所有钉子（所有便签移除）后触发结局：回到主页面 + 换背景视频 + 换 Awake/Sleep 图标
+function checkReminderEnding() {
+    if (state.endingTriggered) return;
+    const left = document.querySelectorAll('#reminder-area .sticky-note').length;
+    if (left === 0) triggerReminderEnding();
+}
+
+function triggerReminderEnding() {
+    state.endingTriggered = true;
+    document.body.classList.add('ending-mode');
+    // 解锁 Sleep 和 Awake
+    unlockStage('sleep');
+    unlockStage('awake');
+
+    // 回到主页面
+    showScreen('welcome-screen');
+
+    // 主页面背景改成视频
+    document.body.style.background = 'none';
+    const v = document.getElementById('ending-bg-video');
+    if (v) {
+        v.style.display = 'block';
+        // 某些浏览器需要显式 play；失败也不影响页面继续
+        v.play().catch(() => {});
+    }
+
+    // 拔完钉子弹回主页面后，使用独立的结局对话框（不含名称）显示文案：you may sleep now.
+    const endingDialogue = document.getElementById('ending-player-dialogue');
+    if (endingDialogue) {
+        document.getElementById('endingTalkText').innerText = 'you may sleep now.';
+        endingDialogue.style.display = 'block';
+    }
+
+    // Awake / Sleep 按钮改成图片图标
+    const awakeBtn = document.getElementById('awake-btn');
+    const sleepBtn = document.getElementById('sleep-btn');
+    if (awakeBtn) {
+        awakeBtn.className = 'icon-only-btn';
+        awakeBtn.innerHTML = `<img src="d:\\lokk\\wee\\IMG_5983.PNG" alt="AWAKE">`;
+    }
+    if (sleepBtn) {
+        sleepBtn.className = 'icon-only-btn';
+        sleepBtn.innerHTML = `<img src="d:\\lokk\\wee\\IMG_5984.PNG" alt="SLEEP">`;
+    }
+}
+
+window.addEventListener('load', () => {
+    const mainDialog = document.getElementById('main-plot-dialog');
+    if (mainDialog) mainDialog.style.display = 'block';
+    updateNavButtons();
+});
+    </script>
+</div>
+</body>
+</html>
